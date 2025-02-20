@@ -6,8 +6,6 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <div className="bg-primary-subtle">
-      <App />
-    </div>
+    <App />
   </StrictMode>
 );

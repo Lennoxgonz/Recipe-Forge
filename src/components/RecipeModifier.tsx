@@ -128,7 +128,7 @@ function RecipeModifier(): JSX.Element {
 
     // Set recipe to ingredients with instructions with proper spacing
     setRecipe(`${formattedIngredients}\n\n${formattedInstructions}`);
-    setActiveTab("modify")
+    setActiveTab("modify");
   }
 
   //Function to clear errors when switching tabs

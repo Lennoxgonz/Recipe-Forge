@@ -9,7 +9,13 @@ interface RecipeCardProps {
 function RecipeCard({ title, imageURL }: RecipeCardProps): JSX.Element {
   return (
     <>
-      <Card style={{ width: "18rem" }}>
+      <Card
+        className="border-dark"
+        style={{
+          width: "18rem",
+          height: "20rem",
+        }}
+      >
         <Card.Img variant="top" src={imageURL} />
         <Card.Body>
           <Card.Title>{title}</Card.Title>

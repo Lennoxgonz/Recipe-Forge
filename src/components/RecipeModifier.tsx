@@ -13,7 +13,7 @@ import {
 import { getModifiedRecipe } from "../api/gemeniAPI";
 import { fetchRecipesByQuery } from "../api/spoonacularAPI";
 import RecipeGrid from "./RecipeGrid";
-import { Recipe } from '../types/recipe.types';
+import { Recipe } from "../types/recipe.types";
 
 interface DietaryRestriction {
   id: string;
@@ -21,14 +21,15 @@ interface DietaryRestriction {
 }
 
 function RecipeModifier(): JSX.Element {
-  const [activeTab, setActiveTab] = useState<'modify' | 'search'>('modify');
+  const [activeTab, setActiveTab] = useState<"modify" | "search">("modify");
   const [recipe, setRecipe] = useState<string>("");
   const [restrictions, setRestrictions] = useState<string[]>([]);
-  const [additionalModifications, setAdditionalModifications] = useState<string>("");
+  const [additionalModifications, setAdditionalModifications] =
+    useState<string>("");
   const [modifiedRecipe, setModifiedRecipe] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [modifyError, setModifyError] = useState<string>("");
-  
+
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchResults, setSearchResults] = useState<Recipe[]>([]);
   const [searchLoading, setSearchLoading] = useState<boolean>(false);
@@ -52,19 +53,23 @@ function RecipeModifier(): JSX.Element {
   }
 
   async function handleModifyRecipe(): Promise<void> {
+    //If no recipe input raise error
     if (!recipe.trim()) {
       setModifyError("Please enter a recipe to modify");
       return;
     }
 
+    //Set loading state and clear any previous error
     setLoading(true);
     setModifyError("");
-    try {
-      const formattedRestrictions = restrictions
-        .map((id) => dietaryRestrictions.find((r) => r.id === id)?.label)
-        .filter(Boolean)
-        .join(", ");
+    //Format dietary restrictions into one string
+    const formattedRestrictions = restrictions
+      .map((id) => dietaryRestrictions.find((r) => r.id === id)?.label)
+      .filter(Boolean)
+      .join(", ");
 
+    try {
+      //Call gemeni api with recipe, restrictions, and modifications
       const modifiedRecipe = await getModifiedRecipe(
         recipe,
         formattedRestrictions,
@@ -79,18 +84,22 @@ function RecipeModifier(): JSX.Element {
   }
 
   async function handleSearchRecipes(): Promise<void> {
+    //Check if there is a search query
     if (!searchQuery.trim()) {
       setSearchError("Please enter a search query");
       return;
     }
-    
+
+    //Set loading state and clear previous errors and search results
     setSearchLoading(true);
     setSearchError("");
     setSearchResults([]);
-    
+
+    //Call spoontacular api with search query
     try {
       const recipes = await fetchRecipesByQuery(searchQuery);
       setSearchResults(recipes);
+      //If no recipes are returned raise error
       if (recipes.length === 0) {
         setSearchError("No recipes found. Try different keywords.");
       }
@@ -102,28 +111,27 @@ function RecipeModifier(): JSX.Element {
   }
 
   function handleSelectRecipe(recipe: Recipe): void {
-    if (!recipe.instructions) {
-      setSearchError("This recipe doesn't have instructions available.");
-      return;
-    }
+    // Map each ingredient to a string and join with newlines
+    const formattedIngredients = recipe.extendedIngredients
+      .map(
+        (ingredient) =>
+          `${ingredient.name}, ${ingredient.amount} ${ingredient.unit}`
+      )
+      .join("\n");
 
-    // Format the recipe text with ingredients and instructions
-    const ingredients = recipe.extendedIngredients
-      .map((ing: { original: any; }) => ing.original)
-      .join('\n');
+    // Format instructions section
+    // flatMap to get all steps and number them
+    const formattedInstructions = recipe.analyzedInstructions
+      .flatMap((instructionSet) => instructionSet.steps)
+      .map((step) => step.step)
+      .join("\n\n");
 
-    const formattedRecipe = `${recipe.title}
-
-Ingredients:
-${ingredients}
-
-Instructions:
-${recipe.instructions}`;
-
-    setRecipe(formattedRecipe);
-    setActiveTab('modify');
+    // Set recipe to ingredients with instructions with proper spacing
+    setRecipe(`${formattedIngredients}\n\n${formattedInstructions}`);
+    setActiveTab("modify")
   }
 
+  //Function to clear errors when switching tabs
   function clearErrors(): void {
     setSearchError("");
     setModifyError("");
@@ -131,28 +139,30 @@ ${recipe.instructions}`;
 
   return (
     <Container className="py-4">
+      {/* Title and Nav bar / Card header*/}
       <Card className="mb-4">
         <Card.Header>
           <Card.Title className="text-center mb-3">
-            AI Recipe Modifier
+            RecipeForge - AI Recipe Modifier
           </Card.Title>
           <Nav variant="tabs">
             <Nav.Item>
-              <Nav.Link 
-                active={activeTab === 'modify'}
+              <Nav.Link
+                active={activeTab === "modify"}
                 onClick={() => {
-                  setActiveTab('modify');
+                  setActiveTab("modify");
                   clearErrors();
                 }}
               >
                 Modify Recipe
               </Nav.Link>
             </Nav.Item>
+
             <Nav.Item>
               <Nav.Link
-                active={activeTab === 'search'}
+                active={activeTab === "search"}
                 onClick={() => {
-                  setActiveTab('search');
+                  setActiveTab("search");
                   clearErrors();
                 }}
               >
@@ -161,14 +171,20 @@ ${recipe.instructions}`;
             </Nav.Item>
           </Nav>
         </Card.Header>
+
+        {/*Card body, if activeTab=modify, show modify tab*/}
         <Card.Body>
-          {activeTab === 'modify' ? (
-            <Form onSubmit={(e) => {
-              e.preventDefault();
-              handleModifyRecipe();
-            }}>
+          {activeTab === "modify" ? (
+            <Form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleModifyRecipe();
+              }}
+            >
               {modifyError && (
-                <Alert variant="danger" className="mb-3">{modifyError}</Alert>
+                <Alert variant="danger" className="mb-3">
+                  {modifyError}
+                </Alert>
               )}
 
               <Form.Group className="mb-4">
@@ -256,11 +272,14 @@ ${recipe.instructions}`;
               )}
             </Form>
           ) : (
+            /* If activeTab!=search, show search tab */
             <div>
-              <Form onSubmit={(e) => {
-                e.preventDefault();
-                handleSearchRecipes();
-              }}>
+              <Form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSearchRecipes();
+                }}
+              >
                 <Form.Group className="mb-4">
                   <Form.Label>Search Recipes:</Form.Label>
                   <div className="d-flex gap-2">
@@ -270,7 +289,7 @@ ${recipe.instructions}`;
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Enter keywords (e.g., 'chicken pasta')"
                     />
-                    <Button 
+                    <Button
                       variant="primary"
                       type="submit"
                       disabled={searchLoading || !searchQuery.trim()}
@@ -285,9 +304,7 @@ ${recipe.instructions}`;
                 </Form.Group>
               </Form>
 
-              {searchError && (
-                <Alert variant="danger">{searchError}</Alert>
-              )}
+              {searchError && <Alert variant="danger">{searchError}</Alert>}
 
               {searchLoading ? (
                 <div className="text-center mt-4">
@@ -297,9 +314,9 @@ ${recipe.instructions}`;
                 searchResults.length > 0 && (
                   <div className="mt-4">
                     <h5>Search Results:</h5>
-                    <RecipeGrid 
+                    <RecipeGrid
                       recipes={searchResults}
-                      onRecipeSelect={handleSelectRecipe}
+                      handleRecipeSelect={handleSelectRecipe}
                     />
                   </div>
                 )

@@ -8,7 +8,7 @@ export async function fetchRecipesByQuery(query: string): Promise<Recipe[]> {
     "&instructionsRequired=true" +
     "&addRecipeInformation=true" +
     "&fillIngredients=true" +
-    "&number=2" +
+    "&number=5" +
     "&addRecipeNutrition=false";
 
   try {
